@@ -1,0 +1,558 @@
+/* ================================
+   GLOBAL LAYOUT
+================================ */
+
+.appWrap {
+  min-height: 100vh;
+  background: #f5f5f7;
+  color: #111;
+  transition: background 0.25s, color 0.25s;
+}
+
+/* ================================
+   AUTH PAGE
+================================ */
+
+.authWrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #eef2ff;
+}
+
+.authCard {
+  background: white;
+  padding: 28px;
+  border-radius: 16px;
+  width: 360px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+.authHead {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  width: 56px;
+  height: 56px;
+  margin: auto;
+  background: #3b82f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #777;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label {
+  font-size: 13px;
+  margin-top: 8px;
+  color: #333;
+}
+
+.input, .smallInput, .searchInput, .smallSelect {
+  padding: 8px 10px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  color: #111;
+}
+
+.btn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  cursor: pointer;
+  color: #111;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  transition: 0.2s;
+}
+
+.btnPrimary {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.btnPrimary:hover {
+  background: #2563eb;
+}
+
+.btnGreen {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.btnGreen:hover {
+  background: #059669;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  padding: 6px;
+  font-size: 14px;
+  color: #2563eb;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+/* ================================
+   HEADER
+================================ */
+
+.header {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 14px 0;
+}
+
+.headerInner {
+  width: 90%;
+  max-width: 1100px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brandLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoRound {
+  width: 40px;
+  height: 40px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.appTitle {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.headerRight {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.userBox {
+  background: #f3f4f6;
+  padding: 6px 12px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logoutBtn {
+  background: none;
+  color: #ef4444;
+  border: none;
+  padding: 8px 10px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* ================================
+   NAVIGATION TABS
+================================ */
+
+.navRow {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0;
+}
+
+.tab {
+  padding: 8px 14px;
+  background: #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tabActive {
+  background: #3b82f6;
+  color: white;
+  border-radius: 8px;
+  padding: 8px 14px;
+}
+
+/* ================================
+   FILTERS + CONTROLS
+================================ */
+
+.controlsRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.smallSelect {
+  width: 130px;
+}
+
+.smallInput {
+  width: 130px;
+}
+
+.searchInput {
+  width: 200px;
+}
+
+/* ================================
+   DASHBOARD CARDS
+================================ */
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: white;
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.incomeCard { border-left: 5px solid #10b981; }
+.expenseCard { border-left: 5px solid #ef4444; }
+.balanceCard { border-left: 5px solid #3b82f6; }
+
+.smallMuted {
+  color: #777;
+  font-size: 14px;
+}
+
+.bigValue {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.iconRound {
+  width: 44px;
+  height: 44px;
+  background: #eef2ff;
+  border-radius: 50%;
+  display: flex;
+  align-items:center;
+  justify-content:center;
+}
+/* ================================
+   RECENT TRANSACTIONS
+================================ */
+
+.recentCard {
+  margin-top: 30px;
+  background: white;
+  padding: 18px;
+  border-radius: 14px;
+  box-shadow: 0px 2px 6px rgba(0,0,0,0.06);
+}
+
+.recentList {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transactionItem {
+  padding: 12px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+}
+
+.txLeft { display: flex; gap: 12px; align-items:center; }
+
+.txBadge {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.badgeIncome { background: #d1fae5; color: #065f46; }
+.badgeExpense { background: #fee2e2; color: #991b1b; }
+
+.txCat { font-size: 16px; font-weight: 600; }
+.txDesc { font-size: 13px; color: #666; }
+
+.txRight { text-align:right; }
+.amountPos { color: #059669; font-weight: 700; }
+.amountNeg { color: #dc2626; font-weight: 700; }
+
+.txDate { font-size: 12px; color:#777; }
+
+/* ================================
+   TABLE
+================================ */
+
+.tableCard {
+  background:white;
+  padding: 20px;
+  border-radius: 14px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align:left;
+  padding: 10px;
+  font-size: 14px;
+  color:#555;
+}
+
+.table td {
+  padding: 10px;
+  font-size: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.tagIncome {
+  background: #d1fae5;
+  color:#065f46;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.tagExpense {
+  background: #fee2e2;
+  color:#991b1b;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.iconBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+}
+
+/* ================================
+   ANALYTICS — CHART CONTAINERS
+================================ */
+
+.analyticsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.chartBox {
+  width: 100%;
+  height: 270px;
+  padding: 10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.chartBoxWide {
+  width: 100%;
+  height: 300px;
+  padding: 10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* ================================
+   BUDGET PANEL
+================================ */
+
+.budgetsPanel {
+  background: white;
+  padding: 18px;
+  border-radius: 14px;
+  margin-top: 20px;
+}
+
+.budgetList {
+  margin-top: 12px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.budgetRow {
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+.budgetLabel {
+  width: 120px;
+  font-size: 14px;
+}
+
+.budgetProgress {
+  flex:1;
+  height: 10px;
+  background:#e5e7eb;
+  border-radius: 6px;
+  overflow:hidden;
+}
+
+.budgetBarFilled {
+  height:100%;
+  background:#3b82f6;
+}
+
+.budgetSpent {
+  width:70px;
+  text-align:right;
+}
+
+/* Budget add row */
+.budgetAdd {
+  display:flex;
+  gap: 8px;
+  align-items:center;
+  margin-top:10px;
+}
+
+/* ================================
+   MODAL
+================================ */
+
+.modalOverlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.modal {
+  background:white;
+  padding:20px;
+  border-radius:16px;
+  width:360px;
+}
+
+.bt-dark .modal {
+  background:#222;
+}
+
+.modalHeader { margin-bottom:12px; }
+.modalActions { margin-top:18px; display:flex; gap:12px; justify-content:flex-end; }
+
+/* ================================
+   EMPTY MESSAGE
+================================ */
+
+.emptyMsg {
+  color:#999;
+  text-align:center;
+  padding: 20px 0;
+}
+
+/* --- Layout container (center & limit width) --- */
+.container {
+  width: 90%;
+  max-width: 1100px;
+  margin: 22px auto;
+  padding: 0 16px;
+}
+
+/* Make appWrap not look like a full-viewport block */
+.appWrap {
+  min-height: 100vh;
+  background: #f5f5f7;
+  color: #111;
+  transition: background 0.25s, color 0.25s;
+  padding-bottom: 40px;
+}
+
+/* ensure header / main spacing */
+.header {
+  padding: 14px 0;
+}
+
+/* controlsRow (keep compact with margins) */
+.controlsRow {
+  display: flex;
+  justify-content: space-between;
+  margin: 18px 0;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Filters panel styling (transactions tab only) */
+.filtersPanel {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  background: white;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+}
+
+/* keep table card width within container */
+.tableCard {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+}
+
+/* reduce chart full-screen feeling */
+.chartBox, .chartBoxWide {
+  max-width: 100%;
+  margin: 0 auto;
+}
