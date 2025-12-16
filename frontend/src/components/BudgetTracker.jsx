@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip as ChartTooltip, Legend as ChartLegend, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { Pie, Bar } from 'react-chartjs-2';
 import { Download, Plus, Trash2, Edit2, DollarSign, TrendingUp, TrendingDown, Wallet, LogOut, User, Sun, Moon } from 'lucide-react';
+import axios from "axios";
 
 ChartJS.register(ArcElement, ChartTooltip, ChartLegend, CategoryScale, LinearScale, BarElement);
 
@@ -66,6 +67,19 @@ export default function BudgetTracker() {
     }
   });
 
+  const API = axios.create({
+    baseURL: `${window.location.protocol}//${window.location.hostname}:5000`,
+    withCredentials: true,
+  });
+
+  API.interceptors.request.use((req) => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      req.headers.Authorization = `Bearer ${token}`;
+    }
+    return req;
+  });
+
   useEffect(() => {
     try { localStorage.setItem('bt_darkMode', JSON.stringify(darkMode)); } catch {}
     if (darkMode) document.documentElement.classList.add('dark');
@@ -74,12 +88,13 @@ export default function BudgetTracker() {
 
   // --- Effects: load user
   useEffect(() => {
-    const savedUser = localStorage.getItem('currentUser');
+    const savedUser = localStorage.getItem("currentUser");
     if (savedUser) {
       setCurrentUser(savedUser);
-      loadUserData(savedUser);
+      fetchTransactions();
     }
   }, []);
+
 
   useEffect(() => {
     try { localStorage.setItem('bt_budgets', JSON.stringify(budgets)); } catch {}
@@ -100,78 +115,88 @@ export default function BudgetTracker() {
   };
 
   // --- Auth handlers
-  const handleAuth = () => {
+  const handleAuth = async () => {
     const { username, password, isLogin } = authForm;
-    if (!username || !password) { alert('Please fill in all fields'); return; }
-    const savedUsers = JSON.parse(localStorage.getItem('users') || '{}');
 
-    if (isLogin) {
-      if (savedUsers[username] && savedUsers[username] === password) {
-        setCurrentUser(username);
-        localStorage.setItem('currentUser', username);
-        loadUserData(username);
-        setAuthForm({ username: '', password: '', isLogin: true });
-      } else {
-        alert('Invalid credentials');
-      }
-    } else {
-      if (savedUsers[username]) {
-        alert('Username already exists');
-      } else {
-        savedUsers[username] = password;
-        localStorage.setItem('users', JSON.stringify(savedUsers));
-        setCurrentUser(username);
-        localStorage.setItem('currentUser', username);
-        setTransactions([]);
-        setAuthForm({ username: '', password: '', isLogin: true });
-      }
+    if (!username || !password) {
+      alert("Fill all fields");
+      return;
+    }
+
+    try {
+      const url = isLogin ? "/login" : "/register";
+
+      const res = await API.post(url, {
+        user: username,
+        pwd: password,
+      });
+
+      //  ADD HERE
+      localStorage.setItem("accessToken", res.data.accessToken);
+      localStorage.setItem("currentUser", username);
+
+      setCurrentUser(username);
+      setAuthForm({ username: "", password: "", isLogin: true });
+
+      fetchTransactions();
+    } catch (err) {
+      alert("Authentication failed");
     }
   };
 
-  const handleLogout = () => {
+
+  const fetchTransactions = async () => {
+    try {
+      const res = await API.get("/auth/transactions");
+      setTransactions(res.data);
+    } catch (err) {
+      console.error("Failed to fetch transactions");
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await API.post("/logout");
+    } catch (e) {
+      // ignore
+    }
+    localStorage.removeItem("accessToken");
     setCurrentUser(null);
-    localStorage.removeItem('currentUser');
     setTransactions([]);
   };
 
   // --- Transaction CRUD
-  const handleSubmit = () => {
-    if (!formData.amount || !formData.category) { alert('Please fill in all required fields'); return; }
-    const newTransaction = {
-      id: editingTransaction ? editingTransaction.id : Date.now(),
-      ...formData,
-      amount: parseFloat(formData.amount),
-      timestamp: new Date().toISOString()
-    };
+  const handleSubmit = async () => {
+    try {
+      if (editingTransaction) {
+        await API.put(`/auth/update/${editingTransaction._id}`, formData);
+      } else {
+        await API.post("/auth/create", formData);
+      }
 
-    let updatedTransactions;
-    if (editingTransaction) {
-      updatedTransactions = transactions.map(t => t.id === editingTransaction.id ? newTransaction : t);
-    } else {
-      updatedTransactions = [...transactions, newTransaction];
-    }
-
-    setTransactions(updatedTransactions);
-    if (currentUser) saveUserData(currentUser, updatedTransactions);
-
-    setFormData({
-      type: 'expense',
-      amount: '',
-      category: '',
-      description: '',
-      date: new Date().toISOString().slice(0, 10)
-    });
-    setShowAddModal(false);
-    setEditingTransaction(null);
-  };
-
-  const deleteTransaction = (id) => {
-    if (window.confirm('Are you sure you want to delete this transaction?')) {
-      const updated = transactions.filter(t => t.id !== id);
-      setTransactions(updated);
-      if (currentUser) saveUserData(currentUser, updated);
+      fetchTransactions();
+      setShowAddModal(false);
+      setEditingTransaction(null);
+    } catch (err) {
+      alert("Failed to save transaction");
     }
   };
+
+  const monthTransactions = useMemo(() => {
+    return transactions.filter(
+      t => t.date && t.date.startsWith(selectedMonth)
+    );
+  }, [transactions, selectedMonth]);
+
+  const deleteTransaction = async (id) => {
+    try {
+      await API.delete(`/auth/delete/${id}`);
+      fetchTransactions();
+    } catch {
+      alert("Delete failed");
+    }
+  };
+
 
   const editTransaction = (transaction) => {
     setEditingTransaction(transaction);
@@ -231,19 +256,44 @@ export default function BudgetTracker() {
   };
 
   // Use derived filtered list for UI
-  const visibleTransactions = useMemo(() => applyFiltersAndSort(transactions), [
-    transactions, selectedMonth, searchTerm, filterType, filterCategory, dateFrom, dateTo, sortBy, sortDir
-  ]);
+  const visibleTransactions = useMemo(
+    () => applyFiltersAndSort(monthTransactions),
+    [
+      monthTransactions,
+      searchTerm,
+      filterType,
+      filterCategory,
+      dateFrom,
+      dateTo,
+      sortBy,
+      sortDir,
+    ]
+  );
 
-  // Totals derived from visibleTransactions
-  const totalIncome = useMemo(() => visibleTransactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0), [visibleTransactions]);
-  const totalExpense = useMemo(() => visibleTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0), [visibleTransactions]);
+
+  // Totals derived from monthTransactions
+  const totalIncome = useMemo(
+    () =>
+      monthTransactions
+        .filter(t => t.type === 'income')
+        .reduce((s, t) => s + t.amount, 0),
+    [monthTransactions]
+  );
+
+  const totalExpense = useMemo(
+    () =>
+      monthTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((s, t) => s + t.amount, 0),
+    [monthTransactions]
+  );
+
   const balance = totalIncome - totalExpense;
 
   // --- Monthly summary helpers
   const calcCategoryTotals = (type) => {
     const map = {};
-    visibleTransactions
+    monthTransactions
       .filter(t => t.type === type)
       .forEach(t => map[t.category] = (map[t.category] || 0) + t.amount);
     return map;
@@ -540,7 +590,7 @@ export default function BudgetTracker() {
                 <div className="space-y-3">
                   {Object.entries(getUserBudgets()).length ? (
                     Object.entries(getUserBudgets()).map(([cat, amt]) => {
-                      const spent = visibleTransactions.filter(t => t.type === 'expense' && t.category === cat).reduce((s,t)=>s+t.amount,0);
+                      const spent = monthTransactions.filter(t => t.type === 'expense' && t.category === cat).reduce((s,t)=>s+t.amount,0);
                       const pct = amt > 0 ? Math.min(100, (spent/amt)*100) : 0;
                       return (
                         <div key={cat} className="flex items-center gap-4">
@@ -574,30 +624,73 @@ export default function BudgetTracker() {
             </div>
 
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-              <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">Recent Transactions</h2>
+              <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-100">
+                Recent Transactions
+              </h2>
+
               <div className="space-y-3">
-                {visibleTransactions.slice(0,5).map(transaction => (
-                  <div key={transaction.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${transaction.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
-                        <DollarSign className={`${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`} />
+                {monthTransactions
+                  .slice()
+                  .sort((a, b) => new Date(b.date) - new Date(a.date))
+                  .slice(0, 5)
+                  .map((transaction) => (
+                    <div
+                      key={transaction._id}
+                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            transaction.type === "income"
+                              ? "bg-green-100"
+                              : "bg-red-100"
+                          }`}
+                        >
+                          <DollarSign
+                            className={
+                              transaction.type === "income"
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }
+                          />
+                        </div>
+
+                        <div>
+                          <p className="font-medium text-gray-800 dark:text-gray-100">
+                            {transaction.category}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-300">
+                            {transaction.description || "—"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-800 dark:text-gray-100">{transaction.category}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-300">{transaction.description}</p>
+
+                      <div className="text-right">
+                        <p
+                          className={`font-bold ${
+                            transaction.type === "income"
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {transaction.type === "income" ? "+" : "-"}$
+                          {transaction.amount.toFixed(2)}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-300">
+                          {transaction.date}
+                        </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-bold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                        {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-300">{transaction.date}</p>
-                    </div>
-                  </div>
-                ))}
-                {visibleTransactions.length === 0 && <p className="text-center text-gray-500 dark:text-gray-400 py-8">No transactions for this month</p>}
+                  ))}
+
+                {monthTransactions.length === 0 && (
+                  <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+                    No transactions for this month
+                  </p>
+                )}
               </div>
             </div>
+
           </div>
         )}
 
@@ -674,46 +767,79 @@ export default function BudgetTracker() {
         {/* Analytics view (Chart.js) */}
         {activeView === 'analytics' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            {/* Income by Category */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Income by Category</h3>
-              {getCategoryTotalsForChart('income', visibleTransactions).length > 0 ? (
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">
+                Income by Category
+              </h3>
+
+              {getCategoryTotalsForChart('income', monthTransactions).length > 0 ? (
                 <div className="w-full h-64 flex items-center justify-center">
                   <Pie
                     data={{
-                      labels: getCategoryTotalsForChart('income', visibleTransactions).map(d => d.name),
+                      labels: getCategoryTotalsForChart('income', monthTransactions).map(d => d.name),
                       datasets: [{
-                        data: getCategoryTotalsForChart('income', visibleTransactions).map(d => d.value),
-                        backgroundColor: getCategoryTotalsForChart('income', visibleTransactions).map((_, i) => COLORS[i % COLORS.length]),
+                        data: getCategoryTotalsForChart('income', monthTransactions).map(d => d.value),
+                        backgroundColor: getCategoryTotalsForChart('income', monthTransactions).map(
+                          (_, i) => COLORS[i % COLORS.length]
+                        ),
                         borderWidth: 0
                       }]
                     }}
-                    options={{ plugins: { legend: { display: false } }, maintainAspectRatio: true, aspect: 1.6 }}
+                    options={{
+                      plugins: { legend: { display: false } },
+                      maintainAspectRatio: true,
+                      aspect: 1.6
+                    }}
                   />
                 </div>
-              ) : <div className="text-center text-gray-500 dark:text-gray-400 py-12">No income data</div>}
+              ) : (
+                <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+                  No income data
+                </div>
+              )}
             </div>
 
+            {/* Expenses by Category */}
             <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Expenses by Category</h3>
-              {getCategoryTotalsForChart('expense', visibleTransactions).length > 0 ? (
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">
+                Expenses by Category
+              </h3>
+
+              {getCategoryTotalsForChart('expense', monthTransactions).length > 0 ? (
                 <div className="w-full h-64 flex items-center justify-center">
                   <Pie
                     data={{
-                      labels: getCategoryTotalsForChart('expense', visibleTransactions).map(d => d.name),
+                      labels: getCategoryTotalsForChart('expense', monthTransactions).map(d => d.name),
                       datasets: [{
-                        data: getCategoryTotalsForChart('expense', visibleTransactions).map(d => d.value),
-                        backgroundColor: getCategoryTotalsForChart('expense', visibleTransactions).map((_, i) => COLORS[i % COLORS.length]),
+                        data: getCategoryTotalsForChart('expense', monthTransactions).map(d => d.value),
+                        backgroundColor: getCategoryTotalsForChart('expense', monthTransactions).map(
+                          (_, i) => COLORS[i % COLORS.length]
+                        ),
                         borderWidth: 0
                       }]
                     }}
-                    options={{ plugins: { legend: { display: false } }, maintainAspectRatio: true, aspect: 1.6 }}
+                    options={{
+                      plugins: { legend: { display: false } },
+                      maintainAspectRatio: true,
+                      aspect: 1.6
+                    }}
                   />
                 </div>
-              ) : <div className="text-center text-gray-500 dark:text-gray-400 py-12">No expense data</div>}
+              ) : (
+                <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+                  No expense data
+                </div>
+              )}
             </div>
 
+            {/* Income vs Expenses */}
             <div className="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">Income vs Expenses</h3>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">
+                Income vs Expenses
+              </h3>
+
               <div className="w-full h-72">
                 <Bar
                   data={{
@@ -725,12 +851,19 @@ export default function BudgetTracker() {
                       borderRadius: 8
                     }]
                   }}
-                  options={{ indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } }, maintainAspectRatio: false }}
+                  options={{
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } },
+                    maintainAspectRatio: false
+                  }}
                 />
               </div>
             </div>
+
           </div>
         )}
+
       </main>
 
       {/* Add/Edit Modal */}
