@@ -182,6 +182,18 @@ app.post("/logout", async (req, res) => {
   res.sendStatus(204);
 });
 
+// CHECK LOGGED-IN USER
+app.get("/auth/me", verifyJWT, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("username");
+    if (!user) return res.sendStatus(401);
+
+    res.json({ username: user.username });
+  } catch (err) {
+    res.sendStatus(401);
+  }
+});
+
 /* =========================
    TRANSACTION ROUTES
 ========================= */

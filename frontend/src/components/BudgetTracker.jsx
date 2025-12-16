@@ -72,6 +72,22 @@ export default function BudgetTracker() {
     withCredentials: true,
   });
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await API.get("/auth/me");
+        setCurrentUser(res.data.username);
+        fetchTransactions();
+      } catch (err) {
+        setCurrentUser(null);
+        setTransactions([]);
+        localStorage.removeItem("accessToken");
+      }
+    };
+
+    checkAuth();
+  }, []);
+
   API.interceptors.request.use((req) => {
     const token = localStorage.getItem("accessToken");
     if (token) {
@@ -85,16 +101,6 @@ export default function BudgetTracker() {
     if (darkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
   }, [darkMode]);
-
-  // --- Effects: load user
-  useEffect(() => {
-    const savedUser = localStorage.getItem("currentUser");
-    if (savedUser) {
-      setCurrentUser(savedUser);
-      fetchTransactions();
-    }
-  }, []);
-
 
   useEffect(() => {
     try { localStorage.setItem('bt_budgets', JSON.stringify(budgets)); } catch {}
@@ -157,13 +163,13 @@ export default function BudgetTracker() {
   const handleLogout = async () => {
     try {
       await API.post("/logout");
-    } catch (e) {
-      // ignore
-    }
+    } catch (err) {}
+
     localStorage.removeItem("accessToken");
     setCurrentUser(null);
     setTransactions([]);
   };
+
 
   // --- Transaction CRUD
   const handleSubmit = async () => {
