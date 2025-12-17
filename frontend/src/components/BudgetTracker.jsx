@@ -68,7 +68,7 @@ export default function BudgetTracker() {
   });
 
   const API = axios.create({
-    baseURL: `${window.location.protocol}//${window.location.hostname}:5000`,
+    baseURL: "https://expense-tracker-backend-ew9l.onrender.com",
     withCredentials: true,
   });
 
